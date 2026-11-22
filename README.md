@@ -50,6 +50,7 @@ For a hosted build, register a reCAPTCHA v3 site key in App Check, set `VITE_REC
 - Letters are passed to the model as data with an instruction to ignore anything written inside them.
 - Hidden values are matched as whole words, and each part of a hidden name is hidden too, so "Mr. Okafor" does not leak after "Daniel Okafor" is hidden.
 - The reply goal you type is redacted with the same list before it is sent.
+- A Content-Security-Policy is shipped in report-only mode until it has been verified against the live site.
 - `firebase.json` sets `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, HSTS and a restrictive `Permissions-Policy` on the hosted build.
 - `pnpm test` covers the redaction code; `pnpm audit` is clean.
 
@@ -59,7 +60,9 @@ For a hosted build, register a reCAPTCHA v3 site key in App Check, set `VITE_REC
 - `src/lib/redact.ts` — local redaction and re-insertion (no network)
 - `src/lib/firebase.ts` — Firebase app, App Check, Remote Config (loaded on demand)
 - `src/lib/device.ts`, `src/lib/config.ts` — on-device availability and limits, no Firebase import
-- `src/App.tsx` — the three-step interface
+- `src/Landing.tsx` — the landing page at `/`
+- `src/App.tsx` — the three-step interface at `/app`
+- `src/ui.tsx` — shared navigation, badges and the redacted-text renderer
 
 ## Limits
 
@@ -70,3 +73,5 @@ For a hosted build, register a reCAPTCHA v3 site key in App Check, set `VITE_REC
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).
+
+The heading typeface is Fraunces, used under the SIL Open Font License (`public/fonts/OFL-Fraunces.txt`).

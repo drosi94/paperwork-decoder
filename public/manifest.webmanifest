@@ -1,0 +1,21 @@
+{
+  "name": "Paperwork Decoder",
+  "short_name": "Decoder",
+  "description": "Understand official letters without handing over your identity. Your name, address and numbers are hidden on your device before anything is sent for explanation.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#f6f3ec",
+  "theme_color": "#f6f3ec",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

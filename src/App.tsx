@@ -4,6 +4,7 @@ import { firebaseConfigured, MAX_IMAGE_BYTES, MAX_LETTER_CHARS } from './lib/con
 import { deviceStatus, type DeviceStatus } from './lib/device'
 import { addEntities, withNameParts, ENTITY_TYPES, findByPattern, redact, rehydrate, type Entity, type EntityType } from './lib/redact'
 import { SAMPLE_LETTER } from './sample'
+import { Badge, Redacted, TopBar } from './ui'
 
 /** Firebase and the AI code load on demand, so the first screen appears without them. */
 const ai = () => import('./lib/ai')
@@ -21,22 +22,6 @@ function explainError(e: unknown): string {
   if (/\b503\b|overloaded|unavailable/i.test(raw)) return 'The model is busy right now. Try again in a few seconds.'
   if (/JSON|Unexpected token/i.test(raw)) return 'The answer came back in a form the app could not read. Try again.'
   return `That did not work: ${raw}`
-}
-
-function Badge({ source }: { source: Source | 'local' }) {
-  const label = source === 'cloud' ? 'Cloud' : source === 'device' ? 'On this device' : 'On this device · no AI'
-  return <span className={`badge ${source === 'cloud' ? 'cloud' : 'device'}`}>{label}</span>
-}
-
-/** Shows redacted text with each placeholder as a visible chip. */
-function Redacted({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/(\[[A-Z]+_\d+\])/).map((part, i) =>
-        /^\[[A-Z]+_\d+\]$/.test(part) ? <mark key={i}>{part.slice(1, -1)}</mark> : part,
-      )}
-    </>
-  )
 }
 
 export default function App() {
@@ -60,6 +45,7 @@ export default function App() {
   const [newType, setNewType] = useState<EntityType>('NAME')
 
   const [copied, setCopied] = useState(false)
+  const [explaining, setExplaining] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
   const firstRender = useRef(true)
 
@@ -145,10 +131,15 @@ export default function App() {
 
   const explain = () =>
     task('Explaining the redacted letter in the cloud…', async () => {
-      setResult(await (await ai()).explainLetter(redacted, language))
-      setSimpler({})
-      setReply(null)
-      setStage('result')
+      setExplaining(true)
+      try {
+        setResult(await (await ai()).explainLetter(redacted, language))
+        setSimpler({})
+        setReply(null)
+        setStage('result')
+      } finally {
+        setExplaining(false)
+      }
     })
 
   const makeSimpler = (term: string, meaning: string) =>
@@ -205,19 +196,26 @@ export default function App() {
 
   return (
     <div className="page">
-      <header>
-        <h1>Paperwork Decoder</h1>
-        <p className="tagline">
-          Understand official letters without handing over your identity. Your name, address and numbers are hidden on
-          this device before anything is sent for explanation.
-        </p>
+      <TopBar>
+        <a href="/#how">How it works</a>
+        <a href="/#privacy">Privacy</a>
+      </TopBar>
+      <header className="app-head">
+        <h1>Decode a letter</h1>
         <ol className="steps">
-          {steps.map(([key, label], i) => (
-            <li key={key} className={key === stage ? 'current' : ''} aria-current={key === stage ? 'step' : undefined}>
-              <span>{i + 1}</span>
-              {label}
-            </li>
-          ))}
+          {steps.map(([key, label], i) => {
+            const at = steps.findIndex(([k]) => k === stage)
+            return (
+              <li
+                key={key}
+                className={i === at ? 'current' : i < at ? 'done' : ''}
+                aria-current={i === at ? 'step' : undefined}
+              >
+                <span>{i < at ? '✓' : i + 1}</span>
+                {label}
+              </li>
+            )
+          })}
         </ol>
       </header>
 
@@ -248,7 +246,7 @@ export default function App() {
               setFile(null)
             }}
             placeholder="Paste the full text of the letter here…"
-            rows={12}
+            rows={9}
             aria-label="Letter text"
           />
           <div className="row">
@@ -299,7 +297,17 @@ export default function App() {
         </section>
       )}
 
-      {stage === 'review' && (
+      {stage === 'review' && explaining && (
+        <section className="card skeleton" aria-hidden="true">
+          <span style={{ width: '45%' }} />
+          <span />
+          <span style={{ width: '85%' }} />
+          <span style={{ width: '30%' }} />
+          <span style={{ height: 96 }} />
+        </section>
+      )}
+
+      {stage === 'review' && !explaining && (
         <section className="card">
           <div className="row between">
             <h2 ref={heading} tabIndex={-1}>This is all the cloud will see</h2>
