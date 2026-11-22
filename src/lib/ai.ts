@@ -105,8 +105,24 @@ export async function prepareDeviceModel(onProgress: (fraction: number) => void)
   await m.initializeDeviceModel(onProgress)
 }
 
+/** Temporary failures (busy model, dropped connection) are retried with backoff; everything else fails at once. */
+async function withRetry<T>(call: () => Promise<T>): Promise<T> {
+  const delays = [800, 2000]
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await call()
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      const temporary = /\b50[0234]\b|overloaded|unavailable|fetch-error|failed to fetch|network/i.test(message)
+      const blocked = /app-?check|\b40[0134]\b|\b429\b|quota/i.test(message)
+      if (!temporary || blocked || attempt >= delays.length || !navigator.onLine) throw e
+      await new Promise((resolve) => setTimeout(resolve, delays[attempt]))
+    }
+  }
+}
+
 async function run(m: GenerativeModel, request: string | (string | Part)[]): Promise<Sourced<string>> {
-  const { response } = await m.generateContent(request)
+  const { response } = await withRetry(() => m.generateContent(request))
   return {
     value: response.text(),
     source: response.inferenceSource === InferenceSource.ON_DEVICE ? 'device' : 'cloud',
