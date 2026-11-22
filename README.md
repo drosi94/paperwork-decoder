@@ -6,6 +6,9 @@ Tax notices, bank letters, leases and medical paperwork are written in language 
 
 Built for the #BuildHybridAI hackathon with **Firebase AI Logic hybrid inference**.
 
+- **Live Web App**: [https://paperwork-decoder-8055c.web.app](https://paperwork-decoder-8055c.web.app)
+- **Demo Video**: [https://youtu.be/lgNLATjnzjM](https://youtu.be/lgNLATjnzjM)
+
 ## How hybrid inference is used
 
 Every model call goes through Firebase AI Logic (`firebase/ai`). Each feature picks its inference mode on purpose (see [`src/lib/ai.ts`](src/lib/ai.ts)):

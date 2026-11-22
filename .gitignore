@@ -29,5 +29,10 @@ dist-ssr
 
 # Local tooling
 .claude
+.gemini
+.cursor
+.codex
+.pi
 .firebase
 *-debug.log
+*.mp4

@@ -2,80 +2,248 @@ import { useMemo, useState } from 'react'
 import { addEntities, findByPattern, redact, withNameParts } from './lib/redact'
 import { Badge, Icon, Link, Redacted, TopBar } from './ui'
 
-/** A short excerpt of the built-in sample letter. Every detail in it is fictional. */
-const EXCERPT = `Mr. Daniel Okafor
+interface SampleDoc {
+  id: string
+  title: string
+  docType: string
+  refId: string
+  text: string
+  names: { value: string; type: 'NAME' }[]
+  addresses: { value: string; type: 'ADDRESS' }[]
+  takeaway: string
+  highlightAmount: string
+  deadline: string
+  urgency: 'Action required' | 'Review required'
+  tokenMap: Record<string, { original: string; label: string; desc: string }>
+}
+
+const SAMPLES: SampleDoc[] = [
+  {
+    id: 'tax',
+    title: 'Munich Property Tax Notice',
+    docType: 'Underpayment Notice',
+    refId: 'TX-2026-884213',
+    text: `Mr. Daniel Okafor
 47 Linden Street, Apt 3B
 
 Dear Mr. Okafor,
 
-The property levy under taxpayer number 5520934417 has been underpaid by 412.60 EUR. Remit the balance no later than 14 December 2026 to IBAN GR16 0110 1250 0000 0001 2300 695.`
+The property levy under taxpayer number 5520934417 has been underpaid by 412.60 EUR. Remit the balance no later than 14 December 2026 to IBAN GR16 0110 1250 0000 0001 2300 695.`,
+    names: [{ value: 'Daniel Okafor', type: 'NAME' }],
+    addresses: [{ value: '47 Linden Street, Apt 3B', type: 'ADDRESS' }],
+    takeaway: 'You underpaid your property levy by 412.60 EUR. Remit payment or submit a written objection before the deadline.',
+    highlightAmount: '412.60 EUR',
+    deadline: '14 Dec 2026',
+    urgency: 'Action required',
+    tokenMap: {
+      '[NAME_1]': {
+        original: 'Mr. Daniel Okafor',
+        label: 'Debtor Name',
+        desc: 'Protected on device by Gemini Nano; surname split prevents partial leaks.',
+      },
+      '[ADDRESS_1]': {
+        original: '47 Linden Street, Apt 3B',
+        label: 'Residential Domicile',
+        desc: 'Physical address never transmitted across the network.',
+      },
+      '[TAX_ID_1]': {
+        original: '5520934417',
+        label: 'Tax Reference',
+        desc: '10-digit municipal tax identifier scrubbed on device.',
+      },
+      '[IBAN_1]': {
+        original: 'GR16 0110 1250 0000 0001 2300 695',
+        label: 'Banking IBAN',
+        desc: 'Financial account digits shielded from cloud training.',
+      },
+    },
+  },
+  {
+    id: 'rent',
+    title: 'Tenancy Rent Increase',
+    docType: 'Civil Code Section 558 Notice',
+    refId: 'LK-89412-B',
+    text: `Ms. Elena Rostova
+Kaiserstraße 14, Whg 4
+
+Dear Ms. Rostova,
+
+In accordance with Section 558 of the Civil Code, your monthly rent under lease LK-89412-B will adjust from 820.00 EUR to 945.00 EUR effective 01 February 2027.`,
+    names: [{ value: 'Elena Rostova', type: 'NAME' }],
+    addresses: [{ value: 'Kaiserstraße 14, Whg 4', type: 'ADDRESS' }],
+    takeaway: 'Your net rent is increasing by 125.00 EUR (+15.2%). Verify with local rent index (Mietspiegel) before consenting.',
+    highlightAmount: '+125.00 EUR',
+    deadline: '31 Jan 2027',
+    urgency: 'Review required',
+    tokenMap: {
+      '[NAME_1]': {
+        original: 'Ms. Elena Rostova',
+        label: 'Tenant Name',
+        desc: 'Protected on device by Gemini Nano.',
+      },
+      '[ADDRESS_1]': {
+        original: 'Kaiserstraße 14, Whg 4',
+        label: 'Apartment Address',
+        desc: 'Kept private in local browser memory.',
+      },
+      '[CASE_ID_1]': {
+        original: 'LK-89412-B',
+        label: 'Lease Agreement',
+        desc: 'Private lease reference shielded.',
+      },
+    },
+  },
+]
 
 function Demo() {
+  const [selectedSample, setSelectedSample] = useState<string>('tax')
   const [view, setView] = useState<'yours' | 'cloud'>('cloud')
   const [activeToken, setActiveToken] = useState<string | null>(null)
 
+  const activeDoc = SAMPLES.find((s) => s.id === selectedSample) || SAMPLES[0]
+
   // The exact same pipeline the app runs: regex patterns first, then Gemini Nano names & addresses.
   const redacted = useMemo(() => {
-    const byPattern = addEntities([], findByPattern(EXCERPT), 'pattern')
+    const byPattern = addEntities([], findByPattern(activeDoc.text), 'pattern')
     const all = addEntities(
       byPattern,
-      withNameParts([
-        { value: 'Daniel Okafor', type: 'NAME' },
-        { value: '47 Linden Street, Apt 3B', type: 'ADDRESS' },
-      ]),
+      withNameParts([...activeDoc.names, ...activeDoc.addresses]),
       'model',
     )
-    return redact(EXCERPT, all)
-  }, [])
+    return redact(activeDoc.text, all)
+  }, [activeDoc])
+
+  const inspectedInfo = activeToken ? activeDoc.tokenMap[activeToken] : null
 
   return (
     <figure className="demo" aria-label="Interactive privacy comparison">
-      <div className="demo-head">
-        <div className="segmented" role="group" aria-label="Toggle document privacy view">
-          <button
-            type="button"
-            aria-pressed={view === 'yours'}
-            onClick={() => setView('yours')}
-          >
-            Your original letter
-          </button>
-          <button
-            type="button"
-            aria-pressed={view === 'cloud'}
-            onClick={() => setView('cloud')}
-          >
-            What the cloud sees
-          </button>
+      {/* Top Document Header & Model Pill */}
+      <div className="demo-top-nav">
+        <div className="demo-sample-switcher" role="tablist" aria-label="Select sample letter">
+          {SAMPLES.map((sample) => (
+            <button
+              key={sample.id}
+              type="button"
+              role="tab"
+              aria-selected={selectedSample === sample.id}
+              className={`demo-sample-btn ${selectedSample === sample.id ? 'is-active' : ''}`}
+              onClick={() => {
+                setSelectedSample(sample.id)
+                setActiveToken(null)
+              }}
+            >
+              {sample.title}
+            </button>
+          ))}
         </div>
-        <Badge source={view === 'cloud' ? 'cloud' : 'device'} />
+        <Badge source={view === 'cloud' ? 'cloud' : 'device'} size="sm" />
       </div>
 
-      <pre className="letter" key={view}>
-        {view === 'cloud' ? (
-          <Redacted
-            text={redacted}
-            activeToken={activeToken}
-            onHoverToken={setActiveToken}
-          />
-        ) : (
-          EXCERPT
-        )}
-      </pre>
-
-      <div className="demo-result">
-        <div className="row between">
-          <span className="demo-label">What Gemini returns to you</span>
-          <span className="deadline-tag">
-            <Icon name="file" size={12} />
-            Due: 14 Dec 2026
+      {/* Main Viewport Container */}
+      <div className="demo-viewport">
+        {/* Document Header Bar */}
+        <div className="demo-viewport-bar">
+          <div className="demo-window-controls" aria-hidden="true">
+            <span className="dot dot-close" />
+            <span className="dot dot-min" />
+            <span className="dot dot-expand" />
+          </div>
+          <span className="demo-doc-title">
+            {activeDoc.docType} · Ref {activeDoc.refId}
+          </span>
+          <span className="demo-privacy-tag">
+            {view === 'cloud' ? 'Scrubbed · Zero PII' : 'Raw Document'}
           </span>
         </div>
-        <p style={{ marginTop: '4px', fontSize: '0.94rem' }}>
-          You underpaid your property levy by <strong>412.60 EUR</strong>. Remit payment or submit a written objection before the deadline.
-        </p>
+
+        {/* View Toggle (Segmented control with constant weights to prevent layout shift) */}
+        <div className="demo-toggle-row">
+          <div className="segmented demo-segmented" role="group" aria-label="Toggle document privacy view">
+            <button
+              type="button"
+              aria-pressed={view === 'yours'}
+              onClick={() => setView('yours')}
+              className={view === 'yours' ? 'is-selected' : ''}
+            >
+              Your original letter
+            </button>
+            <button
+              type="button"
+              aria-pressed={view === 'cloud'}
+              onClick={() => setView('cloud')}
+              className={view === 'cloud' ? 'is-selected' : ''}
+            >
+              What the cloud sees (Scrubbed)
+            </button>
+          </div>
+        </div>
+
+        {/* Letter Text Viewport */}
+        <pre className="letter demo-letter-body" key={`${selectedSample}-${view}`}>
+          {view === 'cloud' ? (
+            <Redacted
+              text={redacted}
+              activeToken={activeToken}
+              onHoverToken={setActiveToken}
+            />
+          ) : (
+            activeDoc.text
+          )}
+        </pre>
+
+        {/* Interactive PII Inspector Bar */}
+        <div className={`demo-inspector-strip ${activeToken ? 'is-inspecting' : ''}`}>
+          {inspectedInfo ? (
+            <div className="inspector-content">
+              <span className="inspector-badge">
+                <Icon name="lock" size={12} />
+                {activeToken}
+              </span>
+              <div className="inspector-details">
+                <span className="inspector-original">
+                  Kept offline: <strong>&ldquo;{inspectedInfo.original}&rdquo;</strong>
+                </span>
+                <span className="inspector-note">{inspectedInfo.desc}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="inspector-hint">
+              <span className="hint-pulse-dot" aria-hidden="true" />
+              <span>
+                {view === 'cloud'
+                  ? 'Hover or tap any entity chip above to inspect on-device isolation.'
+                  : 'Gemini Nano detects identity fields on-device before any network request.'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
-      <figcaption className="hint">
-        Live interactive demo with fictional details. The cloud receives only placeholders; your browser fills your real identity back in.
+
+      {/* Result Dossier Returned by Gemini in the Cloud */}
+      <div className="demo-result">
+        <div className="row between demo-result-header">
+          <div className="demo-result-source">
+            <Icon name="sparkles" size={14} className="sparkle-icon" />
+            <span className="demo-label">Gemini 2.5 Flash Cloud Analysis</span>
+          </div>
+          <span className="deadline-tag">
+            <Icon name="file" size={12} />
+            Due: {activeDoc.deadline}
+          </span>
+        </div>
+        <p className="demo-result-text">
+          {activeDoc.takeaway}
+        </p>
+        <div className="demo-rehydration-note">
+          <Icon name="shield" size={12} />
+          <span>
+            <strong>Local Re-hydration:</strong> Dispute responses are drafted using placeholders; your browser fills in real details locally without server logging.
+          </span>
+        </div>
+      </div>
+
+      <figcaption className="hint demo-caption">
+        Live interactive demo with fictional records. The cloud receives only anonymized tokens; your personal data never leaves this browser tab.
       </figcaption>
     </figure>
   )
@@ -128,24 +296,41 @@ export default function Landing() {
       <main>
         <section className="hero">
           <div className="hero-copy">
-            <span className="eyebrow">
-              <Icon name="shield" size={14} />
-              Zero PII Cloud Architecture · Hybrid AI
-            </span>
-            <h1>Understand official letters without handing over your identity.</h1>
-            <p className="lead">
+            <div className="hero-eyebrow">
+              <span className="pulse-indicator" aria-hidden="true" />
+              <span>Zero-PII Architecture · Firebase AI Logic</span>
+            </div>
+            <h1 className="hero-title">
+              Understand official letters without handing over your identity.
+            </h1>
+            <p className="lead hero-lead">
               Paperwork Decoder redacts your name, address, tax IDs, and bank details right on your device using <strong>Gemini Nano</strong>, then asks <strong>Gemini in the cloud</strong> to decode what’s left: meanings, consequences, and deadlines.
             </p>
-            <div className="row">
-              <Link to="/app" className="button primary">
+            <div className="hero-actions">
+              <Link to="/app" className="button primary large">
                 <span>Decode a letter now</span>
                 <Icon name="arrowRight" size={16} />
               </Link>
-              <a href="#how" className="button secondary">
+              <a href="#how" className="button secondary large">
                 How hybrid inference works
               </a>
             </div>
-            <p className="hint">100% Free · No sign-up · No tracking · No data stored</p>
+            <div className="hero-specs-row" aria-label="Privacy specs">
+              <span className="spec-item">
+                <Icon name="shield" size={13} />
+                <span>Zero PII Stored</span>
+              </span>
+              <span className="spec-dot" aria-hidden="true">·</span>
+              <span className="spec-item">
+                <Icon name="cpu" size={13} />
+                <span>Gemini Nano Local</span>
+              </span>
+              <span className="spec-dot" aria-hidden="true">·</span>
+              <span className="spec-item">
+                <Icon name="cloud" size={13} />
+                <span>Cloud Gemini 2.5</span>
+              </span>
+            </div>
           </div>
           <Demo />
         </section>

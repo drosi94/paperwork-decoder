@@ -1,0 +1,104 @@
+1
+00:00:00,350 --> 00:00:02,616
+Official letters are hard to understand.
+
+2
+00:00:02,616 --> 00:00:06,016
+And they are the last thing you should paste into a chatbot.
+
+3
+00:00:06,966 --> 00:00:11,424
+Your name, your address, your tax number and your bank account, all on one page.
+
+4
+00:00:12,374 --> 00:00:17,825
+Paperwork Decoder is for anyone facing a tax, bank or government letter they cannot follow.
+
+5
+00:00:17,825 --> 00:00:22,916
+It hides who you are on your own device, then asks the cloud to explain what is left.
+
+6
+00:00:23,866 --> 00:00:30,302
+It is built on Firebase AI Logic hybrid inference. Each feature chooses where it runs.
+
+7
+00:00:30,302 --> 00:00:36,290
+Private steps run on the on-device model only. Reasoning runs in the cloud only.
+
+8
+00:00:36,290 --> 00:00:39,284
+And quick help runs on the device first.
+
+9
+00:00:40,234 --> 00:00:43,597
+Here is the app, with Gemini Nano ready inside Chrome.
+
+10
+00:00:43,597 --> 00:00:45,528
+I will use a sample tax notice.
+
+11
+00:00:46,478 --> 00:00:54,010
+Gemini Nano, running in the browser, finds the name, the address, the taxpayer number, the bank account and the phone.
+
+12
+00:00:54,010 --> 00:00:58,861
+This is the exact text that will be sent. Nothing has left the computer yet.
+
+13
+00:00:58,861 --> 00:01:01,478
+And I can hide or reveal anything myself.
+
+14
+00:01:02,428 --> 00:01:05,290
+Now the cloud model gets the redacted letter.
+
+15
+00:01:05,290 --> 00:01:10,633
+It says what this is, that it is urgent, the two things I can do, and the deadlines.
+
+16
+00:01:10,633 --> 00:01:17,057
+My real bank reference is back in the answer. The cloud returned a label, and my device filled it in.
+
+17
+00:01:18,007 --> 00:01:25,614
+Here is the receipt. About a thousand characters of redacted text went to the cloud, and nine personal details never left.
+
+18
+00:01:25,614 --> 00:01:28,670
+Quick help uses the third mode, prefer on-device.
+
+19
+00:01:28,670 --> 00:01:33,471
+This simpler explanation came from the local model, instantly and at no cost.
+
+20
+00:01:34,421 --> 00:01:35,672
+It also drafts a reply.
+
+21
+00:01:35,672 --> 00:01:40,458
+The cloud writes it with placeholders, and my reference numbers are added on the device.
+
+22
+00:01:41,408 --> 00:01:45,579
+The same app runs natively on Android, with the same Firebase SDK.
+
+23
+00:01:45,579 --> 00:01:49,877
+This emulator has no Gemini Nano, so it shows the designed fallback.
+
+24
+00:01:49,877 --> 00:01:55,944
+Details are hidden by patterns, the app says so, and nothing private goes to the cloud silently.
+
+25
+00:01:56,894 --> 00:02:01,037
+Paperwork Decoder. Two models, each doing the job it is suited to.
+
+26
+00:02:01,037 --> 00:02:03,674
+Your letter explained, your identity kept.
+
