@@ -1,5 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app'
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import { getAI, GoogleAIBackend, type AI } from 'firebase/ai'
 import { fetchAndActivate, getRemoteConfig, getValue } from 'firebase/remote-config'
 
@@ -37,7 +37,7 @@ function init(): Promise<void> {
       import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true
   }
   initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'missing-site-key'),
+    provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_SITE_KEY || 'missing-site-key'),
     isTokenAutoRefreshEnabled: true,
   })
 

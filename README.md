@@ -41,7 +41,7 @@ Requirements: Node 20+, Chrome 139+ on desktop.
 5. Open the app, open DevTools, and copy the `AppCheck debug token` printed in the console. Register it in Firebase console under **App Check > Apps > Manage debug tokens**. To reuse one token in every local browser, put it in `.env.development.local` as `VITE_APPCHECK_DEBUG_TOKEN=...`. That file is git-ignored and is never loaded for a production build.
 6. Click **Try a sample letter**, then **Hide my personal details**.
 
-For a hosted build, register a reCAPTCHA v3 site key in App Check, set `VITE_RECAPTCHA_SITE_KEY`, then `pnpm build` and deploy `dist/` to Firebase Hosting.
+For a hosted build, create a score-based reCAPTCHA key in your Google Cloud project, register its site key in App Check under **Fraud Defense (reCAPTCHA Enterprise)**, set `VITE_RECAPTCHA_SITE_KEY`, then `pnpm build` and deploy `dist/` to Firebase Hosting.
 
 ## Privacy and security
 
