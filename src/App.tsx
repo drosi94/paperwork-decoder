@@ -17,7 +17,10 @@ function explainError(e: unknown): string {
   const raw = e instanceof Error ? e.message : String(e)
   if (raw.startsWith('LIMIT:')) return raw.slice(6)
   if (!navigator.onLine) return 'You are offline. Hiding details works offline, but explaining the letter needs the internet. Reconnect and try again.'
-  if (/app-?check|\b40[13]\b|permission|unauthenticated/i.test(raw)) return 'Firebase rejected the request (App Check). Register this browser\u2019s debug token in the Firebase console, then try again.'
+  if (/app-?check|\b40[013]\b|permission|unauthenticated/i.test(raw))
+    return import.meta.env.DEV
+      ? 'Firebase rejected the request (App Check). Register this browser\u2019s debug token in the Firebase console, then try again.'
+      : 'The security check for this page did not pass. Reload the page and try again in a moment.'
   if (/\b429\b|quota|rate.?limit|resource.?exhausted/i.test(raw)) return 'The free usage limit was reached. Wait a minute and try again.'
   if (/\b503\b|overloaded|unavailable/i.test(raw)) return 'The model is busy right now. Try again in a few seconds.'
   if (/JSON|Unexpected token/i.test(raw)) return 'The answer came back in a form the app could not read. Try again.'

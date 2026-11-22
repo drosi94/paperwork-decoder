@@ -50,7 +50,7 @@ For a hosted build, create a score-based reCAPTCHA key in your Google Cloud proj
 - Letters are passed to the model as data with an instruction to ignore anything written inside them.
 - Hidden values are matched as whole words, and each part of a hidden name is hidden too, so "Mr. Okafor" does not leak after "Daniel Okafor" is hidden.
 - The reply goal you type is redacted with the same list before it is sent.
-- A Content-Security-Policy is shipped in report-only mode until it has been verified against the live site.
+- An enforcing Content-Security-Policy allows scripts only from the site itself and reCAPTCHA, and connections only to the site and Google APIs.
 - `firebase.json` sets `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, HSTS and a restrictive `Permissions-Policy` on the hosted build.
 - `pnpm test` covers the redaction code; `pnpm audit` is clean.
 
