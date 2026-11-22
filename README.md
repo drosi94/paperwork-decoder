@@ -43,6 +43,21 @@ Requirements: Node 20+, Chrome 139+ on desktop.
 
 For a hosted build, create a score-based reCAPTCHA key in your Google Cloud project, register its site key in App Check under **Fraud Defense (reCAPTCHA Enterprise)**, set `VITE_RECAPTCHA_SITE_KEY`, then `pnpm build` and deploy `dist/` to Firebase Hosting.
 
+## Android app
+
+The `android/` folder holds a native Kotlin and Jetpack Compose app with the same three steps and the same per-feature inference modes, using `firebase-ai` and `firebase-ai-ondevice` (Gemini Nano through ML Kit's Prompt API).
+
+```bash
+cd android
+# Put your own google-services.json in android/app/ (Firebase console, or `firebase apps:sdkconfig ANDROID`)
+./gradlew :app:testDebugUnitTest   # redaction tests
+./gradlew :app:installDebug        # install on a connected device or emulator
+```
+
+Debug builds use the App Check debug provider: copy the token printed in Logcat (`DebugAppCheckProvider`) into **App Check > Apps > Manage debug tokens**. Release builds use Play Integrity.
+
+On-device inference needs a phone that supports Gemini Nano. On other devices and on emulators the app says so, hides details with patterns only, and asks you to hide names yourself. Differences from the web app: on-device requests are limited to about 4,000 tokens, so letters are processed in smaller pieces, and "Say it more simply" uses the on-device model only for English and Korean, the languages it is validated for.
+
 ## Privacy and security
 
 - The debug token lives in a dev-only env file and the code that reads it is removed from production builds; this is checked by searching `dist/` for the token.

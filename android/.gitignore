@@ -1,0 +1,10 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.kotlin/
+captures/
+# Firebase config for your own project. Get it from the Firebase console or
+# `firebase apps:sdkconfig ANDROID`. Not committed.
+app/google-services.json
