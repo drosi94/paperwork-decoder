@@ -16,7 +16,7 @@ Web (Chrome)
 ## Links
 - Live app: https://paperworkdecoder.com
 - Code: https://github.com/drosi94/paperwork-decoder
-- Video: https://youtu.be/lgNLATjnzjM
+- Video: https://youtu.be/_WHj41UJDYE
 
 ---
 
