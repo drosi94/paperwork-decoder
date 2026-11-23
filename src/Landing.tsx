@@ -257,7 +257,7 @@ const MODES: {
   {
     feature: 'Reading letter photos (OCR)',
     source: 'device',
-    why: 'The original unredacted image never leaves your computer.',
+    why: 'The original photo stays on your computer, unless your browser has no on-device model and you choose to send it.',
   },
   {
     feature: 'Detecting names, addresses & IDs',

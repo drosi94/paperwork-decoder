@@ -1821,3 +1821,19 @@ footer {
 .brand-pill, .topbar-actions a { white-space: nowrap; }
 @media (max-width: 860px) { .brand-pill { display: none; } }
 @media (max-width: 700px) { .topbar-actions a:not(.button) { display: none; } }
+
+/* Review screen: let both columns shrink, so the "Hidden on this device" panel can never spill out of its card. */
+.workbench-split > *, .workbench-sidebar > *, .sidebar-card > * { min-width: 0; }
+.workbench-sidebar, .sidebar-card { grid-template-columns: minmax(0, 1fr); }
+.entity-list { overflow-x: hidden; }
+.entity-list li, .entity-info { min-width: 0; }
+.entity-chip { white-space: nowrap; flex: none; }
+.entity-value { overflow-wrap: anywhere; min-width: 0; }
+/* The add row wraps instead of pushing its button out of the panel. */
+.add-entity-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-entity-form input { flex: 1 1 160px; min-width: 0; }
+.add-entity-form select { flex: 1 1 110px; min-width: 0; }
+.add-entity-form button { flex: none; }
+
+/* In-page links must land below the sticky top bar, not underneath it. */
+[id], h2 { scroll-margin-top: 104px; }

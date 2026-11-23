@@ -63,42 +63,42 @@ It says what this is, that it is urgent, the two things I can do, and the deadli
 My real bank reference is back in the answer. The cloud returned a label, and my device filled it in.
 
 17
-00:01:18,007 --> 00:01:25,614
-Here is the receipt. About a thousand characters of redacted text went to the cloud, and nine personal details never left.
+00:01:18,007 --> 00:01:26,955
+Here is the receipt. About a thousand characters of redacted text went to the cloud, and ten personal details stayed on the device.
 
 18
-00:01:25,614 --> 00:01:28,670
+00:01:26,955 --> 00:01:30,301
 Quick help uses the third mode, prefer on-device.
 
 19
-00:01:28,670 --> 00:01:33,471
+00:01:30,301 --> 00:01:35,561
 This simpler explanation came from the local model, instantly and at no cost.
 
 20
-00:01:34,421 --> 00:01:35,672
+00:01:36,511 --> 00:01:37,762
 It also drafts a reply.
 
 21
-00:01:35,672 --> 00:01:40,458
+00:01:37,762 --> 00:01:42,548
 The cloud writes it with placeholders, and my reference numbers are added on the device.
 
 22
-00:01:41,408 --> 00:01:45,579
+00:01:43,498 --> 00:01:47,992
 The same app runs natively on Android, with the same Firebase SDK.
 
 23
-00:01:45,579 --> 00:01:49,877
+00:01:47,992 --> 00:01:52,621
 This emulator has no Gemini Nano, so it shows the designed fallback.
 
 24
-00:01:49,877 --> 00:01:55,944
-Details are hidden by patterns, the app says so, and nothing private goes to the cloud silently.
+00:01:52,621 --> 00:01:58,545
+Details are hidden by patterns, the app says so, and the cloud explanation still works.
 
 25
-00:01:56,894 --> 00:02:01,037
+00:01:59,495 --> 00:02:03,638
 Paperwork Decoder. Two models, each doing the job it is suited to.
 
 26
-00:02:01,037 --> 00:02:03,674
+00:02:03,638 --> 00:02:06,275
 Your letter explained, your identity kept.
 
