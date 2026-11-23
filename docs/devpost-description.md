@@ -11,7 +11,7 @@ Paperwork Decoder
 Understand official letters without handing over your identity.
 
 ## Platform
-Web (Chrome)
+Web (Chrome). Also select Android: a native Kotlin app is in the repo (see below).
 
 ## Links
 - Live app: https://paperworkdecoder.com
@@ -66,6 +66,10 @@ Other details:
 
 The code that does this is in [`src/lib/ai.ts`](https://github.com/drosi94/paperwork-decoder/blob/main/src/lib/ai.ts).
 
+## Android
+
+The repo also contains a native Android app (Kotlin and Jetpack Compose) with the same three steps and the same per-feature inference modes, using `firebase-ai` and `firebase-ai-ondevice`. It has been tested on an Android emulator, which has no Gemini Nano: the app says so, hides details with patterns, and the cloud explanation works. It has not yet run on a phone with Gemini Nano.
+
 ## How I built it
 
 React and TypeScript with Vite. There is no backend of my own: the browser talks to Firebase directly, protected by App Check.
@@ -95,13 +99,13 @@ Model output is treated as untrusted: it is rendered as text, coerced into a fix
 
 ## What's next
 
-- Android and iOS versions on the same Firebase project, using Gemini Nano and Apple Foundation Models through the same SDK.
+- Test the Android app on a phone with Gemini Nano (it has only run on an emulator, which uses the designed pattern-only fallback), then add iOS with Apple Foundation Models through the same SDK.
 - Multi-page scanned letters (text PDFs already work; scans read page 1 only).
 - An optional, encrypted history with Firebase Authentication and Firestore.
 
 ## Built during the submission period
 
-Everything. The project was started on November 22, 2026 and has no pre-existing code. It was built with an AI coding assistant (Claude Code). Third-party pieces: React, Vite, the Firebase JavaScript SDK, and the Fraunces typeface (SIL Open Font License).
+Everything. The project was started on November 22, 2026 and has no pre-existing code. It was built with an AI coding assistant (Claude Code). Third-party pieces: React, Vite, the Firebase JavaScript and Android SDKs, PDF.js for reading PDFs in the browser, Jetpack Compose, and the Fraunces typeface (SIL Open Font License). The demo video's narration uses an ElevenLabs voice.
 
 ## Testing instructions for judges
 
