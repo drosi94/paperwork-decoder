@@ -1816,3 +1816,8 @@ footer {
   .brand-pill { display: none; }
   .brand-name { font-size: 1rem; }
 }
+
+/* Mid-width top bar (tablets, split-screen windows): keep every item on one line and shed the least important first. */
+.brand-pill, .topbar-actions a { white-space: nowrap; }
+@media (max-width: 860px) { .brand-pill { display: none; } }
+@media (max-width: 700px) { .topbar-actions a:not(.button) { display: none; } }
