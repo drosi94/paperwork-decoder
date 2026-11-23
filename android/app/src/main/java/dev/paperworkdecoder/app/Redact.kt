@@ -13,7 +13,8 @@ data class Entity(val value: String, val type: EntityType, val placeholder: Stri
 object Redactor {
     private val dateLike = Regex("""^\d{1,4}[./-]\d{1,2}[./-]\d{1,4}$""")
     private val email = Regex("""[\w.+-]+@[\w-]+(?:\.[\w-]+)+""")
-    private val account = Regex("""\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?\b""")
+    // A photo can wrap an account number onto the next line, so a line break counts as a separator.
+    private val account = Regex("""\b[A-Z]{2}\d{2}(?:[ \n]?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4}|\n\d{1,4})?\b""")
     private val prefixedId = Regex("""\b[A-Z]{1,4}[-/ ]?\d[\d/-]{4,}\d\b""")
     private val phone = Regex("""\+?\d[\d ().-]{7,}\d""")
     private val longNumber = Regex("""\b\d{6,}\b""")

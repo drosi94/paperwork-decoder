@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import type { Explanation, Source, Sourced } from './lib/ai'
 import { firebaseConfigured, MAX_IMAGE_BYTES, MAX_LETTER_CHARS } from './lib/config'
 import { deviceStatus, type DeviceStatus } from './lib/device'
+import { checkRateLimit, getDailyQuota, recordRateLimitAction } from './lib/ratelimit'
 import { addEntities, withNameParts, ENTITY_TYPES, findByPattern, redact, rehydrate, type Entity, type EntityType } from './lib/redact'
 import { SAMPLE_LETTER } from './sample'
 import { Badge, CopyButton, Icon, Redacted, TopBar } from './ui'
@@ -37,6 +38,7 @@ export default function App() {
   const [stage, setStage] = useState<Stage>('input')
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [note, setNote] = useState<string | null>(null)
   const [language, setLanguage] = useState('English')
   const [entities, setEntities] = useState<Entity[]>([])
   const [usedModel, setUsedModel] = useState(false)
@@ -111,6 +113,31 @@ export default function App() {
     setStage('review')
   }
 
+  /** PDFs are opened entirely in the browser: text is extracted locally, scans become an image for the on-device model. */
+  const addPdf = (pdf: File) =>
+    task('Reading the PDF on this device…', async () => {
+      if (pdf.size > MAX_IMAGE_BYTES) throw new Error('LIMIT:That PDF is too large. Use one under 8 MB.')
+      const { readPdf } = await import('./lib/pdf')
+      const result = await readPdf(pdf).catch(() => {
+        throw new Error('LIMIT:That PDF could not be opened. If it is password-protected, remove the password or paste the text instead.')
+      })
+      if (result.isScanned) {
+        setText('')
+        setFile(result.scannedImageFile ?? null)
+        setNote(
+          result.pages > 1
+            ? `This PDF is a scan, so only page 1 of ${result.pages} will be read. Add the other pages as photos one at a time.`
+            : 'This PDF is a scan, so it will be read as a photo.',
+        )
+        return
+      }
+      if (result.text.length > MAX_LETTER_CHARS)
+        throw new Error(`LIMIT:That PDF has too much text (${result.text.length.toLocaleString()} characters). Use one letter at a time, up to ${MAX_LETTER_CHARS.toLocaleString()} characters.`)
+      setFile(null)
+      setText(result.text)
+      setNote(result.pages > 5 ? `Read the first 5 of ${result.pages} pages on this device.` : `Read ${result.pages === 1 ? '1 page' : result.pages + ' pages'} on this device. Check the text before continuing.`)
+    })
+
   const start = () =>
     task('Reading…', async () => {
       if (file && file.size > MAX_IMAGE_BYTES) throw new Error('LIMIT:That photo is too large. Use one under 8 MB.')
@@ -134,17 +161,24 @@ export default function App() {
 
   const readInCloud = () =>
     task('Reading the photo in the cloud…', async () => {
+      const check = checkRateLimit('cloud-image')
+      if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
       setNeedConsent(false)
       const read = await (await ai()).readImage(file!, true)
+      recordRateLimitAction('cloud-image')
       setReadBy(read.source)
       await hide(read.value)
     })
 
   const explain = () =>
     task('Explaining the redacted letter in the cloud…', async () => {
+      const check = checkRateLimit('explain')
+      if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
       setExplaining(true)
       try {
-        setResult(await (await ai()).explainLetter(redacted, language))
+        const res = await (await ai()).explainLetter(redacted, language)
+        recordRateLimitAction('explain')
+        setResult(res)
         setSimpler({})
         setReply(null)
         setStage('result')
@@ -155,15 +189,24 @@ export default function App() {
 
   const makeSimpler = (term: string, meaning: string) =>
     task('Rewording on this device…', async () => {
+      const check = checkRateLimit('cloud-simplify')
+      if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
       const s = await (await ai()).simplify(term, meaning, language)
+      if (s.source === 'cloud') {
+        recordRateLimitAction('cloud-simplify')
+      }
       setSimpler((prev) => ({ ...prev, [term]: s }))
     })
 
   const writeReply = (e: FormEvent) => {
     e.preventDefault()
     return task('Drafting a reply in the cloud…', async () => {
+      const check = checkRateLimit('reply')
+      if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
       // The goal is typed by the user and may repeat a hidden detail, so it is redacted too.
-      setReply(await (await ai()).draftReply(redacted, redact(goal, entities), language))
+      const res = await (await ai()).draftReply(redacted, redact(goal, entities), language)
+      recordRateLimitAction('reply')
+      setReply(res)
     })
   }
 
@@ -179,6 +222,7 @@ export default function App() {
   }
 
   function reset() {
+    setNote(null)
     setStage('input')
     setText('')
     setFile(null)
@@ -239,7 +283,7 @@ export default function App() {
           <section className="card">
             <div className="row between">
               <h2 ref={heading} tabIndex={-1}>
-                Paste the letter or add a photo
+                Paste the letter, or add a photo or PDF
               </h2>
               <Badge source={device === 'available' ? 'device' : 'local'} />
             </div>
@@ -259,14 +303,18 @@ export default function App() {
               <div className="row">
                 <label className="button secondary">
                   <Icon name={file ? 'file' : 'upload'} size={16} />
-                  {file ? `Photo: ${file.name}` : 'Upload photo (JPEG/PNG)'}
+                  {file ? `Photo: ${file.name}` : 'Upload photo or PDF'}
                   <input
                     type="file"
-                    accept="image/jpeg,image/png"
+                    accept="image/jpeg,image/png,application/pdf"
                     className="sr-only"
                     onChange={(e) => {
-                      setFile(e.target.files?.[0] ?? null)
+                      const picked = e.target.files?.[0] ?? null
+                      e.target.value = ''
                       setNeedConsent(false)
+                      setNote(null)
+                      if (picked?.type === 'application/pdf') addPdf(picked)
+                      else setFile(picked)
                     }}
                   />
                 </label>
@@ -276,6 +324,7 @@ export default function App() {
                   onClick={() => {
                     setText(SAMPLE_LETTER)
                     setFile(null)
+                    setNote(null)
                   }}
                 >
                   <Icon name="sparkles" size={16} />
@@ -324,8 +373,13 @@ export default function App() {
               <span>Hide my personal details</span>
               <Icon name="arrowRight" size={16} />
             </button>
+            {note && (
+              <p className="note-inline" role="status">
+                {note}
+              </p>
+            )}
             <p className="hint">
-              100% private. Nothing leaves this device until you inspect and approve the hidden redactions on the next screen.
+              Nothing leaves this device at this step. You review what is hidden on the next screen before anything is sent.
             </p>
           </section>
         )}
@@ -450,15 +504,20 @@ export default function App() {
                 <Icon name="arrowLeft" size={16} />
                 Back to edit
               </button>
-              <button
-                className="primary grow"
-                onClick={explain}
-                disabled={!!busy || !firebaseConfigured}
-              >
-                <Icon name="cloud" size={18} />
-                <span>Send redacted text & explain with Gemini</span>
-                <Icon name="arrowRight" size={16} />
-              </button>
+              <div className="row grow" style={{ justifyContent: 'flex-end', gap: '10px' }}>
+                <span className="quota-tag" title="Daily free decodes remaining per browser session">
+                  {getDailyQuota('explain').remaining} of {getDailyQuota('explain').max} decodes left today
+                </span>
+                <button
+                  className="primary grow"
+                  onClick={explain}
+                  disabled={!!busy || !firebaseConfigured}
+                >
+                  <Icon name="cloud" size={18} />
+                  <span>Send redacted text & explain with Gemini</span>
+                  <Icon name="arrowRight" size={16} />
+                </button>
+              </div>
             </div>
           </section>
         )}

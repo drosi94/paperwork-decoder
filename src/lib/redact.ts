@@ -24,7 +24,8 @@ export function findByPattern(text: string): { value: string; type: EntityType }
     }
   }
   add(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, 'EMAIL')
-  add(/\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?\b/g, 'ACCOUNT')
+  // A PDF or photo can wrap an account number onto the next line, so a line break counts as a separator.
+  add(/\b[A-Z]{2}\d{2}(?:[ \n]?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4}|\n\d{1,4})?\b/g, 'ACCOUNT')
   add(/\b[A-Z]{1,4}[-/ ]?\d[\d/-]{4,}\d\b/g, 'ID')
   add(/\+?\d[\d ().-]{7,}\d/g, 'PHONE', (v) => !DATE_LIKE.test(v) && v.replace(/\D/g, '').length >= 9 && /[ ().+-]/.test(v))
   add(/\b\d{6,}\b/g, 'ID')

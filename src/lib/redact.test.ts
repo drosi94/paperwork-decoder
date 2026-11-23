@@ -74,3 +74,13 @@ describe('whole-word matching', () => {
     expect(out).toBe('[NAME_1] met Danielson. Ref [ID_1], not 91234567.')
   })
 })
+
+describe('line-wrapped values', () => {
+  it('hides a bank account that a PDF wrapped onto the next line', () => {
+    const text = 'Pay to IBAN GR16 0110 1250 0000 0001 2300\n695, quoting the reference.'
+    const list = addEntities([], findByPattern(text), 'pattern')
+    const out = redact(text, list)
+    expect(out).toBe('Pay to IBAN [ACCOUNT_1], quoting the reference.')
+    expect(rehydrate(out, list)).toBe(text)
+  })
+})

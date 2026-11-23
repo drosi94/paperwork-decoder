@@ -152,7 +152,7 @@ function Demo() {
             {activeDoc.docType} · Ref {activeDoc.refId}
           </span>
           <span className="demo-privacy-tag">
-            {view === 'cloud' ? 'Scrubbed · Zero PII' : 'Raw Document'}
+            {view === 'cloud' ? 'Details hidden' : 'Raw Document'}
           </span>
         </div>
 
@@ -173,7 +173,7 @@ function Demo() {
               onClick={() => setView('cloud')}
               className={view === 'cloud' ? 'is-selected' : ''}
             >
-              What the cloud sees (Scrubbed)
+              What the cloud sees
             </button>
           </div>
         </div>
@@ -224,7 +224,7 @@ function Demo() {
         <div className="row between demo-result-header">
           <div className="demo-result-source">
             <Icon name="sparkles" size={14} className="sparkle-icon" />
-            <span className="demo-label">Gemini 2.5 Flash Cloud Analysis</span>
+            <span className="demo-label">Cloud explanation · Gemini</span>
           </div>
           <span className="deadline-tag">
             <Icon name="file" size={12} />
@@ -237,13 +237,13 @@ function Demo() {
         <div className="demo-rehydration-note">
           <Icon name="shield" size={12} />
           <span>
-            <strong>Local Re-hydration:</strong> Dispute responses are drafted using placeholders; your browser fills in real details locally without server logging.
+            <strong>Local Re-hydration:</strong> Dispute responses are drafted using placeholders; your browser fills in the real details locally.
           </span>
         </div>
       </div>
 
       <figcaption className="hint demo-caption">
-        Live interactive demo with fictional records. The cloud receives only anonymized tokens; your personal data never leaves this browser tab.
+        Live interactive demo with fictional records. In the app you review exactly what will be sent before anything leaves your browser.
       </figcaption>
     </figure>
   )
@@ -267,7 +267,7 @@ const MODES: {
   {
     feature: 'Explaining consequences & deadlines',
     source: 'cloud',
-    why: 'Requires reasoning from Gemini 2.5 in the cloud, but receives only scrubbed placeholders.',
+    why: 'Needs a stronger Gemini model in the cloud. It receives the redacted text you approved.',
   },
   {
     feature: 'Drafting formal replies',
@@ -286,7 +286,7 @@ export default function Landing() {
     <div className="landing">
       <TopBar>
         <a href="#how">How it works</a>
-        <a href="#privacy">Privacy guarantee</a>
+        <a href="#privacy">Privacy</a>
         <a href="#faq">FAQ</a>
         <Link to="/app" className="button primary small">
           Open App
@@ -298,7 +298,7 @@ export default function Landing() {
           <div className="hero-copy">
             <div className="hero-eyebrow">
               <span className="pulse-indicator" aria-hidden="true" />
-              <span>Zero-PII Architecture · Firebase AI Logic</span>
+              <span>Redacted on your device first · Firebase AI Logic</span>
             </div>
             <h1 className="hero-title">
               Understand official letters without handing over your identity.
@@ -318,7 +318,7 @@ export default function Landing() {
             <div className="hero-specs-row" aria-label="Privacy specs">
               <span className="spec-item">
                 <Icon name="shield" size={13} />
-                <span>Zero PII Stored</span>
+                <span>Nothing stored</span>
               </span>
               <span className="spec-dot" aria-hidden="true">·</span>
               <span className="spec-item">
@@ -328,7 +328,7 @@ export default function Landing() {
               <span className="spec-dot" aria-hidden="true">·</span>
               <span className="spec-item">
                 <Icon name="cloud" size={13} />
-                <span>Cloud Gemini 2.5</span>
+                <span>Gemini in the cloud</span>
               </span>
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function Landing() {
                 <h3>Sent to the cloud (Scrubbed)</h3>
               </div>
               <ul>
-                <li>The letter with all PII replaced by anonymized placeholders</li>
+                <li>The letter with the hidden details replaced by placeholders</li>
                 <li>Payment amounts, currency, and deadline dates (essential for explanations)</li>
                 <li>The issuing agency or authority name (e.g. tax office)</li>
                 <li>Your chosen explanation language</li>

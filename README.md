@@ -85,7 +85,7 @@ On-device inference needs a phone that supports Gemini Nano. On other devices an
 ## Limits
 
 - On-device inference needs Chrome on desktop with the flags above and takes at most about 9,000 tokens per request, so long letters are processed in pieces.
-- On-device input is text, JPEG or PNG. PDFs are not supported yet.
+- Input is pasted text, a JPEG or PNG photo, or a PDF. PDFs are opened in the browser: text PDFs are read directly (first 5 pages), and scanned PDFs have page 1 turned into an image for the on-device model.
 - This is not legal advice.
 
 ## License

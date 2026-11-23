@@ -70,4 +70,13 @@ class RedactTest {
         assertEquals(long, parts.joinToString(""))
         assertTrue(parts.all { it.length <= 1000 })
     }
+
+    @Test
+    fun hidesAnAccountWrappedOntoTheNextLine() {
+        val text = "Pay to IBAN GR16 0110 1250 0000 0001 2300\n695, quoting the reference."
+        val list = Redactor.addEntities(emptyList(), Redactor.findByPattern(text), FoundBy.PATTERN)
+        val out = Redactor.redact(text, list)
+        assertEquals("Pay to IBAN [ACCOUNT_1], quoting the reference.", out)
+        assertEquals(text, Redactor.rehydrate(out, list))
+    }
 }
