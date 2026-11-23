@@ -76,7 +76,8 @@ Model output is treated as untrusted: it is rendered as text, coerced into a fix
 
 - **The surname leak.** The first version hid "Daniel Okafor" and then sent "Dear Mr. Okafor" to the cloud. The fix is the name-part rule above, with a unit test.
 - **A debug token in the production bundle.** Aliasing `import.meta.env` made Vite inline every environment variable, including the App Check debug token. The token now lives in a dev-only env file and the build is checked for it.
-- **On-device limits.** The local model takes about 9,000 tokens per request and no PDFs, so long letters are processed in pieces and photos must be JPEG or PNG.
+- **On-device limits.** The local model takes about 9,000 tokens per request and cannot read PDFs. Long letters are processed in pieces, and PDFs are opened in the browser first: text PDFs are read directly, and scanned PDFs have their first page turned into an image for the on-device model.
+- **A security policy that blocked the on-device model.** The Firebase AI SDK loads a photo's inline data with `fetch()`, which a strict Content-Security-Policy `connect-src` blocks. Photo reading failed on the live site until `data:` was allowed.
 - **Honest degradation.** Deciding what to do when there is no on-device model, without quietly sending private data to the cloud, shaped most of the interface.
 
 ## What I'm proud of
@@ -93,7 +94,7 @@ Model output is treated as untrusted: it is rendered as text, coerced into a fix
 ## What's next
 
 - Android and iOS versions on the same Firebase project, using Gemini Nano and Apple Foundation Models through the same SDK.
-- PDF support and multi-page letters.
+- Multi-page scanned letters (text PDFs already work; scans read page 1 only).
 - An optional, encrypted history with Firebase Authentication and Firestore.
 
 ## Built during the submission period
