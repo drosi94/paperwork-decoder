@@ -62,6 +62,8 @@ Other details:
 - **Firebase Remote Config** holds the cloud model name, so it can be changed without a redeploy.
 - **Firebase Hosting** serves the app with an enforcing Content-Security-Policy and other security headers.
 
+**WebMCP for AI agents.** The page also registers WebMCP tools (`hide_personal_details`, `explain_letter`, `draft_reply`), so an AI agent in Chrome can decode a letter for the user. The tools run inside the page and use the same hybrid pipeline. They return placeholders only, never the hidden details, because the agent may itself be a cloud model; the cloud tools are marked consequential so the browser can ask the user before anything leaves the device.
+
 The code that does this is in [`src/lib/ai.ts`](https://github.com/drosi94/paperwork-decoder/blob/main/src/lib/ai.ts).
 
 ## How I built it

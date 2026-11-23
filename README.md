@@ -46,6 +46,25 @@ Requirements: Node 20+, Chrome 139+ on desktop.
 
 For a hosted build, create a score-based reCAPTCHA key in your Google Cloud project, register its site key in App Check under **Fraud Defense (reCAPTCHA Enterprise)**, set `VITE_RECAPTCHA_SITE_KEY`, then `pnpm build` and deploy `dist/` to Firebase Hosting.
 
+## WebMCP: use it from an AI agent in Chrome
+
+The site registers [WebMCP](https://developer.chrome.com/docs/ai/webmcp/imperative-api) tools, so an AI agent running in the visitor's browser can use the decoder. The tools run inside the page and go through the same pipeline as the buttons: details are hidden on the device first, and only redacted text reaches the cloud through Firebase AI Logic.
+
+| Tool | Page | What it does |
+|---|---|---|
+| `open_letter_decoder` | `/` | Opens the decoder. |
+| `get_decoder_status` | `/app` | Current step, on-device model availability, details hidden, explanations left today. Read-only. |
+| `hide_personal_details` | `/app` | Loads a letter (or the sample) and hides details on the device. Returns the redacted text. |
+| `explain_letter` | `/app` | Sends the redacted text to the cloud and returns the explanation. Marked consequential, so the browser can ask the user first. |
+| `draft_reply` | `/app` | Drafts a reply for a goal. Marked consequential. |
+
+Privacy rules the tools follow:
+- Real names and numbers are never returned to the agent, only placeholders such as `[NAME_1]`. The page shows the user the filled-in version.
+- When no on-device model is available, names are not detected automatically, so the redacted text is withheld from the agent and `explain_letter` refuses until the user has hidden names on the page.
+- The tools share the page's daily limits.
+
+WebMCP is in a Chrome origin trial. To make the tools available to visitors without a flag, register the site at the [origin trial page](https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241) and set `VITE_WEBMCP_ORIGIN_TRIAL` in `.env.local`.
+
 ## Android app
 
 The `android/` folder holds a native Kotlin and Jetpack Compose app with the same three steps and the same per-feature inference modes, using `firebase-ai` and `firebase-ai-ondevice` (Gemini Nano through ML Kit's Prompt API).

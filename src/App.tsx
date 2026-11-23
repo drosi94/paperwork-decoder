@@ -4,6 +4,7 @@ import { firebaseConfigured, MAX_IMAGE_BYTES, MAX_LETTER_CHARS } from './lib/con
 import { deviceStatus, type DeviceStatus } from './lib/device'
 import { checkRateLimit, getDailyQuota, recordRateLimitAction } from './lib/ratelimit'
 import { addEntities, withNameParts, ENTITY_TYPES, findByPattern, redact, rehydrate, type Entity, type EntityType } from './lib/redact'
+import { registerTools, requireString, type WebMcpTool } from './lib/webmcp'
 import { SAMPLE_LETTER } from './sample'
 import { Badge, CopyButton, Icon, Redacted, TopBar } from './ui'
 
@@ -94,7 +95,184 @@ export default function App() {
 
   const canUseDevice = firebaseConfigured && device !== 'unavailable'
 
-  async function hide(body: string) {
+  // WebMCP tools are registered once, so they read the latest state and handlers from here.
+  const live = useRef({ stage, text, entities, redacted, language, result, busy, device, hide, usedModel })
+  useEffect(() => {
+    live.current = { stage, text, entities, redacted, language, result, busy, device, hide, usedModel }
+  })
+
+  useEffect(() => {
+    const ac = new AbortController()
+    const L = () => live.current
+
+    /** Runs one tool step with the same busy indicator and error display a click would get. */
+    async function step<T>(label: string, fn: () => Promise<T>): Promise<T> {
+      if (L().busy) throw new Error(`The page is busy (${L().busy}). Try again when it finishes.`)
+      setBusy(label)
+      setError(null)
+      try {
+        return await fn()
+      } catch (e) {
+        const message = explainError(e)
+        setError(message)
+        throw new Error(message)
+      } finally {
+        setBusy(null)
+        setProgress(null)
+      }
+    }
+
+    const countKinds = (list: Entity[]) =>
+      list.reduce<Record<string, number>>((acc, e) => ((acc[e.type] = (acc[e.type] ?? 0) + 1), acc), {})
+
+    const PLACEHOLDER_NOTE =
+      'Placeholders such as [NAME_1] stand for personal details that stay on the user’s device. Do not try to guess them; the page shows the user the filled-in version.'
+
+    const tools: WebMcpTool[] = [
+      {
+        name: 'get_decoder_status',
+        title: 'Decoder status',
+        description:
+          'Where the user is in Paperwork Decoder (add letter, check redactions, understand), whether the on-device model is available, and how many details are hidden. Call this first.',
+        inputSchema: { type: 'object', properties: {} },
+        annotations: { readOnlyHint: true },
+        execute: async () => ({
+          step: L().stage === 'input' ? 'add_letter' : L().stage === 'review' ? 'check_redactions' : 'understand',
+          on_device_model: L().device,
+          letter_loaded: L().text.trim().length > 0,
+          hidden_details: L().entities.length,
+          explanations_left_today: getDailyQuota('explain').remaining,
+        }),
+      },
+      {
+        name: 'hide_personal_details',
+        title: 'Hide personal details on this device',
+        description:
+          'Loads an official letter into Paperwork Decoder and hides names, addresses, ID numbers, bank accounts, phone numbers and emails on the user’s device, using Gemini Nano where available. Nothing is sent to the cloud. Returns the redacted text with placeholders. Pass letter_text, or set use_sample to true for a fictional example letter.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            letter_text: { type: 'string', description: 'The full text of the letter.' },
+            use_sample: { type: 'boolean', description: 'Use the built-in fictional sample letter instead.' },
+          },
+        },
+        annotations: { untrustedContentHint: true },
+        execute: async (input) => {
+          const body = input.use_sample === true ? SAMPLE_LETTER : requireString(input, 'letter_text', 20, MAX_LETTER_CHARS)
+          return step('Finding personal details on this device…', async () => {
+            setFile(null)
+            setNote(null)
+            setResult(null)
+            setReply(null)
+            setReadBy(null)
+            const { found, model } = await L().hide(body)
+            if (!model) {
+              // Without the on-device model only patterns ran, so names and addresses may still be in
+              // the text. It is not returned, and the user must hide them on the page first.
+              return {
+                redacted_text: null,
+                hidden_details: found.length,
+                hidden_by_kind: countKinds(found),
+                found_by: 'patterns only: no on-device model in this browser',
+                names_may_be_visible: true,
+                next_step:
+                  'Names and addresses were not detected automatically in this browser. Ask the user to hide them on the “Check redactions” screen (type each one into “Add custom text to hide”). The redacted text is withheld until then. After that, call explain_letter.',
+              }
+            }
+            return {
+              redacted_text: redact(body, found),
+              hidden_details: found.length,
+              hidden_by_kind: countKinds(found),
+              found_by: model ? 'on-device model (Gemini Nano) and patterns' : 'patterns only: no on-device model in this browser',
+              next_step:
+                'Ask the user to check the “Check redactions” screen, where they can hide more or reveal details. Then call explain_letter.',
+              note: PLACEHOLDER_NOTE,
+            }
+          })
+        },
+      },
+      {
+        name: 'explain_letter',
+        title: 'Explain the redacted letter',
+        description:
+          'Sends the redacted letter currently shown on the “Check redactions” screen (placeholders only, never the hidden details) to a Gemini model in the cloud, and returns a plain-language summary, urgency, actions with deadlines, consequences and questions to ask. Call hide_personal_details first, and only after the user has checked the redactions.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            language: { type: 'string', enum: LANGUAGES, description: 'Language of the explanation. Defaults to the one selected on the page.' },
+          },
+        },
+        // Sends data off the device, so browsers can ask the user to confirm first.
+        annotations: { consequentialHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          if (L().stage === 'input' || !L().text.trim()) throw new Error('No letter is loaded. Call hide_personal_details first.')
+          if (!L().usedModel && !L().entities.some((e) => e.foundBy === 'you'))
+            throw new Error(
+              'Names and addresses have not been checked yet. In this browser they are not found automatically: ask the user to hide them on the “Check redactions” screen, then try again.',
+            )
+          const lang = typeof input.language === 'string' && LANGUAGES.includes(input.language) ? input.language : L().language
+          return step('Explaining the redacted letter in the cloud…', async () => {
+            const check = checkRateLimit('explain')
+            if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
+            setLanguage(lang)
+            setExplaining(true)
+            try {
+              const sent = L().redacted
+              const res = await (await ai()).explainLetter(sent, lang)
+              recordRateLimitAction('explain')
+              setResult(res)
+              setSimpler({})
+              setReply(null)
+              setStage('result')
+              return {
+                explanation: res.value,
+                ran_in: res.source === 'cloud' ? 'cloud (Gemini, via Firebase AI Logic)' : 'on this device',
+                characters_sent_to_cloud: sent.length,
+                details_kept_on_device: L().entities.length,
+                note: PLACEHOLDER_NOTE,
+              }
+            } finally {
+              setExplaining(false)
+            }
+          })
+        },
+      },
+      {
+        name: 'draft_reply',
+        title: 'Draft a reply to the letter',
+        description:
+          'Drafts a short, polite reply to the explained letter for a goal such as “ask for two more weeks to pay”. The cloud model writes it with placeholders; the page fills in the user’s real details for them to copy. Call explain_letter first.',
+        inputSchema: {
+          type: 'object',
+          properties: { goal: { type: 'string', description: 'What the reply should achieve, in a few words.' } },
+          required: ['goal'],
+        },
+        annotations: { consequentialHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          if (L().stage !== 'result') throw new Error('Explain the letter first with explain_letter.')
+          const wanted = requireString(input, 'goal', 5, 300)
+          return step('Drafting a reply in the cloud…', async () => {
+            const check = checkRateLimit('reply')
+            if (!check.allowed) throw new Error(`LIMIT:${check.reason}`)
+            setGoal(wanted)
+            // The goal may repeat a hidden detail, so it is redacted with the same list.
+            const res = await (await ai()).draftReply(L().redacted, redact(wanted, L().entities), L().language)
+            recordRateLimitAction('reply')
+            setReply(res)
+            return {
+              reply_with_placeholders: res.value,
+              note: 'The page shows the user this reply with their real details filled in, ready to copy. ' + PLACEHOLDER_NOTE,
+            }
+          })
+        },
+      },
+    ]
+
+    registerTools(tools, ac.signal)
+    return () => ac.abort()
+  }, [])
+
+  async function hide(body: string): Promise<{ found: Entity[]; model: boolean }> {
     let found = addEntities([], findByPattern(body), 'pattern')
     let model = false
     if (canUseDevice) {
@@ -113,6 +291,7 @@ export default function App() {
     setEntities(found)
     setUsedModel(model)
     setStage('review')
+    return { found, model }
   }
 
   /** PDFs are opened entirely in the browser: text is extracted locally, scans become an image for the on-device model. */
@@ -149,7 +328,8 @@ export default function App() {
         )
       if (!file) {
         setReadBy(null)
-        return hide(text)
+        await hide(text)
+        return
       }
       if (!canUseDevice) {
         setNeedConsent(true)

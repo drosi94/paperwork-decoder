@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { addEntities, findByPattern, redact, withNameParts } from './lib/redact'
+import { navigate } from './lib/nav'
+import { registerTools } from './lib/webmcp'
 import { Badge, Icon, Link, Redacted, TopBar } from './ui'
 
 interface SampleDoc {
@@ -282,6 +284,27 @@ const MODES: {
 ]
 
 export default function Landing() {
+  useEffect(() => {
+    const ac = new AbortController()
+    registerTools(
+      [
+        {
+          name: 'open_letter_decoder',
+          title: 'Open the letter decoder',
+          description:
+            'Opens Paperwork Decoder, which explains official letters (tax, bank, landlord, government) after hiding personal details on the user’s device. The decoder page provides the tools hide_personal_details, explain_letter and draft_reply.',
+          inputSchema: { type: 'object', properties: {} },
+          execute: async () => {
+            navigate('/app')
+            return 'Opened the decoder. Its tools are now available; call get_decoder_status.'
+          },
+        },
+      ],
+      ac.signal,
+    )
+    return () => ac.abort()
+  }, [])
+
   return (
     <div className="landing">
       <TopBar>
