@@ -73,6 +73,12 @@ const EXPLAIN_SCHEMA = {
 
 const models = new Map<string, GenerativeModel>()
 
+/**
+ * A cloud answer normally takes 3 to 10 seconds. The SDK's default wait is 3 minutes, which looks
+ * like a frozen page, so cloud requests give up after 30 seconds and are retried once.
+ */
+const CLOUD_REQUEST = { timeout: 30_000 }
+
 async function model(kind: 'private-json' | 'private-text' | 'cloud-json' | 'cloud-text' | 'hybrid-text') {
   const cached = models.get(kind)
   if (cached) return cached
@@ -86,14 +92,15 @@ async function model(kind: 'private-json' | 'private-text' | 'cloud-json' | 'clo
       }),
     'private-text': () => getGenerativeModel(ai, { mode: InferenceMode.ONLY_ON_DEVICE }),
     'cloud-json': () =>
-      getGenerativeModel(ai, {
-        mode: InferenceMode.ONLY_IN_CLOUD,
-        inCloudParams: { model: cloudModel, generationConfig: json(EXPLAIN_SCHEMA) },
-      }),
+      getGenerativeModel(
+        ai,
+        { mode: InferenceMode.ONLY_IN_CLOUD, inCloudParams: { model: cloudModel, generationConfig: json(EXPLAIN_SCHEMA) } },
+        CLOUD_REQUEST,
+      ),
     'cloud-text': () =>
-      getGenerativeModel(ai, { mode: InferenceMode.ONLY_IN_CLOUD, inCloudParams: { model: cloudModel } }),
+      getGenerativeModel(ai, { mode: InferenceMode.ONLY_IN_CLOUD, inCloudParams: { model: cloudModel } }, CLOUD_REQUEST),
     'hybrid-text': () =>
-      getGenerativeModel(ai, { mode: InferenceMode.PREFER_ON_DEVICE, inCloudParams: { model: cloudModel } }),
+      getGenerativeModel(ai, { mode: InferenceMode.PREFER_ON_DEVICE, inCloudParams: { model: cloudModel } }, CLOUD_REQUEST),
   }[kind]()
   models.set(kind, made)
   return made
@@ -107,13 +114,13 @@ export async function prepareDeviceModel(onProgress: (fraction: number) => void)
 
 /** Temporary failures (busy model, dropped connection) are retried with backoff; everything else fails at once. */
 async function withRetry<T>(call: () => Promise<T>): Promise<T> {
-  const delays = [800, 2000]
+  const delays = [1500]
   for (let attempt = 0; ; attempt++) {
     try {
       return await call()
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
-      const temporary = /\b50[0234]\b|overloaded|unavailable|fetch-error|failed to fetch|network/i.test(message)
+      const temporary = /\b50[0234]\b|overloaded|unavailable|fetch-error|failed to fetch|network|timed? ?out|abort/i.test(message)
       const blocked = /app-?check|\b40[0134]\b|\b429\b|quota/i.test(message)
       if (!temporary || blocked || attempt >= delays.length || !navigator.onLine) throw e
       await new Promise((resolve) => setTimeout(resolve, delays[attempt]))

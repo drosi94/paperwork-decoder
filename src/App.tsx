@@ -30,7 +30,8 @@ function explainError(e: unknown): string {
       ? 'Firebase rejected the request (App Check). Register this browser’s debug token in the Firebase console, then try again.'
       : 'The security check for this page did not pass. Reload the page and try again in a moment.'
   if (/\b429\b|quota|rate.?limit|resource.?exhausted/i.test(raw)) return 'The free usage limit was reached. Wait a minute and try again.'
-  if (/\b503\b|overloaded|unavailable/i.test(raw)) return 'The model is busy right now. Try again in a few seconds.'
+  if (/\b50[0234]\b|overloaded|unavailable|timed? ?out|abort/i.test(raw))
+    return 'Google’s cloud model did not answer this time. Your letter is still here: press the button again in a moment.'
   if (/JSON|Unexpected token/i.test(raw)) return 'The answer came back in a form the app could not read. Try again.'
   return `That did not work: ${raw}`
 }

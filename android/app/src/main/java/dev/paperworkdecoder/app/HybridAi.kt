@@ -19,6 +19,7 @@ import com.google.firebase.ai.type.content
 import com.google.firebase.ai.type.generationConfig
 import com.google.firebase.remoteconfig.remoteConfig
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -128,14 +129,15 @@ object HybridAi {
 
     /** Temporary failures (busy model, dropped connection) are retried with backoff. */
     private suspend fun <T> withRetry(call: suspend () -> T): T {
-        val delays = listOf(800L, 2000L)
+        val delays = listOf(1500L)
         var attempt = 0
         while (true) {
             try {
-                return call()
+                // A cloud answer normally takes seconds; give up after 30 so the screen never looks frozen.
+                return withTimeout(30_000) { call() }
             } catch (e: Exception) {
                 val message = e.message.orEmpty()
-                val temporary = Regex("""\b50[0234]\b|overloaded|unavailable|BUSY|timeout""", RegexOption.IGNORE_CASE).containsMatchIn(message)
+                val temporary = e is kotlinx.coroutines.TimeoutCancellationException || Regex("""\b50[0234]\b|overloaded|unavailable|BUSY|timeout|timed out""", RegexOption.IGNORE_CASE).containsMatchIn(message)
                 val blocked = Regex("""app.?check|\b40[0134]\b|\b429\b|quota""", RegexOption.IGNORE_CASE).containsMatchIn(message)
                 if (!temporary || blocked || attempt >= delays.size) throw e
                 delay(delays[attempt++])
