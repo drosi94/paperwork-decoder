@@ -10,7 +10,7 @@ This project grew out of my work at [Dikaio.ai](https://dikaio.ai/en), where I b
 
 ## What it does
 
-1. **Add your letter.** Paste the text or add a photo.
+1. **Add your letter.** Paste the text, or add a photo or a PDF.
 2. **Check what is hidden.** An on-device model finds names, addresses, ID numbers, bank accounts, phone numbers and emails, and replaces them with labels such as `NAME_1`. You see the exact text that will leave your device and can hide more, or un-hide, before anything is sent.
 3. **Understand it.** The cloud model receives only the redacted text and returns a plain-language summary, urgency, what you must do and by when, what happens if you do nothing, difficult words explained, and questions worth asking. Your real details are put back into the answer on your device.
 
