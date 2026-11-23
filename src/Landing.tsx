@@ -283,6 +283,37 @@ const MODES: {
   },
 ]
 
+const VIDEO_ID = '_WHj41UJDYE'
+
+/**
+ * Click-to-play: nothing loads from YouTube until the visitor asks for it, so the landing page
+ * stays fast and sets no third-party cookies. The privacy-enhanced youtube-nocookie domain is used.
+ */
+function DemoVideo() {
+  const [playing, setPlaying] = useState(false)
+  return (
+    <div className="video-frame">
+      {playing ? (
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?autoplay=1&rel=0`}
+          title="Paperwork Decoder demo video"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      ) : (
+        <button type="button" className="video-poster" onClick={() => setPlaying(true)} aria-label="Play the demo video (2 minutes, loads from YouTube)">
+          <img src="/demo-poster.jpg" alt="" width={1280} height={720} loading="lazy" decoding="async" />
+          <span className="video-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28"><path d="M8 5.5v13l11-6.5z" fill="currentColor" /></svg>
+          </span>
+          <span className="video-caption">Play demo · 2:07 · loads from YouTube</span>
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function Landing() {
   useEffect(() => {
     const ac = new AbortController()
@@ -356,6 +387,16 @@ export default function Landing() {
             </div>
           </div>
           <Demo />
+        </section>
+
+        <section id="video" className="band video-band" aria-labelledby="video-title">
+          <div>
+            <h2 id="video-title">See it in two minutes</h2>
+            <p className="hint" style={{ marginTop: '4px' }}>
+              A real letter decoded on the live site: hidden on the device, explained in the cloud.
+            </p>
+          </div>
+          <DemoVideo />
         </section>
 
         <section id="how" className="band">
