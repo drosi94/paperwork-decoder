@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://paperwork-decoder-8055c.web.app/sitemap.xml
+Sitemap: https://paperworkdecoder.com/sitemap.xml

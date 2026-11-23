@@ -14,7 +14,7 @@ Understand official letters without handing over your identity.
 Web (Chrome)
 
 ## Links
-- Live app: https://paperwork-decoder-8055c.web.app
+- Live app: https://paperworkdecoder.com
 - Code: https://github.com/drosi94/paperwork-decoder
 - Video: https://youtu.be/lgNLATjnzjM
 
@@ -103,7 +103,7 @@ Everything. The project was started on November 22, 2026 and has no pre-existing
 
 ## Testing instructions for judges
 
-1. Open https://paperwork-decoder-8055c.web.app in **Chrome on desktop** (139 or newer). No login is needed.
+1. Open https://paperworkdecoder.com in **Chrome on desktop** (139 or newer). No login is needed.
 2. For on-device inference, enable `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` and "Gemma 4 for Built-in AI", then restart Chrome. The first run downloads the model, which can take several minutes.
 3. Click **Decode a letter**, then **Try a sample letter**, then **Hide my personal details**.
 4. On step 2, check the green "On this device" badge and that the name, address and numbers are replaced by labels.
