@@ -28,7 +28,7 @@ AI is good at explaining these letters. But they are also the documents you shou
 
 Hybrid inference removes that trade-off. A small model on the device is good enough to find the personal details; a large model in the cloud is good enough to explain the letter, and it does not need to know who you are to do it.
 
-**[YOU] If you have a personal reason for building this, add one or two sentences here. Judges score "genuine understanding of the problem space".**
+This project grew out of my work at [Dikaio.ai](https://dikaio.ai/en), where I built a document anonymizer on Google Cloud. It worked, but every document still had to travel to a server before anything could be hidden. Hybrid inference let me move that first step onto the user's own device, so the private part never leaves it and only the anonymized text reaches the cloud.
 
 ## What it does
 
