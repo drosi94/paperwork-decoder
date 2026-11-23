@@ -79,4 +79,10 @@ class RedactTest {
         assertEquals("Pay to IBAN [ACCOUNT_1], quoting the reference.", out)
         assertEquals(text, Redactor.rehydrate(out, list))
     }
+
+    @Test
+    fun hidesACommonStreetAddressWithoutAModel() {
+        assertTrue("47 Linden Street, Apt 3B" in values)
+        assertTrue(Redactor.findByPattern("Pay by 14 December 2026 or within 30 days.").isEmpty())
+    }
 }

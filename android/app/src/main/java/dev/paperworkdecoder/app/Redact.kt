@@ -18,6 +18,10 @@ object Redactor {
     private val prefixedId = Regex("""\b[A-Z]{1,4}[-/ ]?\d[\d/-]{4,}\d\b""")
     private val phone = Regex("""\+?\d[\d ().-]{7,}\d""")
     private val longNumber = Regex("""\b\d{6,}\b""")
+    // Common English street addresses. The on-device model usually finds these, but not on every run.
+    private val street = Regex(
+        """\b\d{1,5}[A-Za-z]?\s+(?:[A-Z][A-Za-z'.-]+\s+){1,4}(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Boulevard|Blvd|Drive|Dr|Way|Court|Ct|Square|Sq|Place|Pl|Terrace|Close|Crescent)\b(?:,?\s*(?:Apt|Apartment|Unit|Suite|Flat|Floor)\.?\s*#?[A-Za-z0-9-]+)?""",
+    )
     private val titles = setOf("mrs", "miss", "mister", "madam", "prof", "professor", "doctor", "sir", "the", "and", "von", "van", "del")
 
     /** Things a regular expression can find reliably, with no model at all. */
@@ -33,6 +37,7 @@ object Redactor {
             !dateLike.matches(v) && v.count(Char::isDigit) >= 9 && v.any { it in " ().+-" }
         }
         add(longNumber, EntityType.ID)
+        add(street, EntityType.ADDRESS)
         return out
     }
 

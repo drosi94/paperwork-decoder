@@ -84,3 +84,12 @@ describe('line-wrapped values', () => {
     expect(rehydrate(out, list)).toBe(text)
   })
 })
+
+describe('street addresses', () => {
+  it('hides a common English street address without a model', () => {
+    expect(values).toContain('47 Linden Street, Apt 3B')
+    const found = findByPattern('Send it to 12B Baker Road. The deadline is 14 December 2026.')
+    expect(found.map((f) => f.value)).toContain('12B Baker Road')
+    expect(findByPattern('Pay by 14 December 2026 or within 30 days.')).toEqual([])
+  })
+})

@@ -56,9 +56,12 @@ export function Logo({ size = 28 }: { size?: number }) {
 export function TopBar({
   children,
   deviceReady,
+  deviceDownload,
 }: {
   children?: ReactNode
   deviceReady?: boolean
+  /** The on-device model exists for this browser but still has to download. */
+  deviceDownload?: boolean
 }) {
   return (
     <header className="topbar-wrapper">
@@ -73,7 +76,7 @@ export function TopBar({
             <div className="topbar-device-indicator">
               <span className={`status-dot ${deviceReady ? 'ready' : 'fallback'}`} />
               <span className="indicator-label">
-                {deviceReady ? 'Gemini Nano Ready' : 'Pattern Redaction'}
+                {deviceReady ? 'Gemini Nano Ready' : deviceDownload ? 'Gemini Nano downloads on first use' : 'Pattern Redaction'}
               </span>
             </div>
           )}

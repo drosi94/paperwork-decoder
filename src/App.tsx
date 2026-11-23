@@ -103,6 +103,8 @@ export default function App() {
         await (await ai()).prepareDeviceModel(setProgress)
         found = addEntities(found, withNameParts(await (await ai()).findPersonalData(body)), 'model')
         model = true
+        // The model has now run, so it is ready whatever the first check said (it may have just downloaded).
+        setDevice('available')
       } catch {
         /* fall through: pattern-only redaction, and the review screen says so */
       }
@@ -242,7 +244,7 @@ export default function App() {
 
   return (
     <div className="page">
-      <TopBar deviceReady={device === 'available'}>
+      <TopBar deviceReady={device === 'available'} deviceDownload={device === 'downloadable' || device === 'downloading'}>
         <a href="/#how">How it works</a>
         <a href="/#privacy">Privacy</a>
       </TopBar>
@@ -285,7 +287,7 @@ export default function App() {
               <h2 ref={heading} tabIndex={-1}>
                 Paste the letter, or add a photo or PDF
               </h2>
-              <Badge source={device === 'available' ? 'device' : 'local'} />
+              <Badge source={device === 'unavailable' ? 'local' : 'device'} />
             </div>
 
             <textarea

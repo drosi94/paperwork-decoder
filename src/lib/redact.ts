@@ -29,6 +29,12 @@ export function findByPattern(text: string): { value: string; type: EntityType }
   add(/\b[A-Z]{1,4}[-/ ]?\d[\d/-]{4,}\d\b/g, 'ID')
   add(/\+?\d[\d ().-]{7,}\d/g, 'PHONE', (v) => !DATE_LIKE.test(v) && v.replace(/\D/g, '').length >= 9 && /[ ().+-]/.test(v))
   add(/\b\d{6,}\b/g, 'ID')
+  // Common English street addresses ("47 Linden Street, Apt 3B"). The on-device model usually finds
+  // these, but not on every run, so the obvious form is caught here as well.
+  add(
+    /\b\d{1,5}[A-Za-z]?\s+(?:[A-Z][A-Za-z'.-]+\s+){1,4}(?:Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Boulevard|Blvd|Drive|Dr|Way|Court|Ct|Square|Sq|Place|Pl|Terrace|Close|Crescent)\b(?:,?\s*(?:Apt|Apartment|Unit|Suite|Flat|Floor)\.?\s*#?[A-Za-z0-9-]+)?/g,
+    'ADDRESS',
+  )
   return found
 }
 
